@@ -22,7 +22,7 @@ class Module(Module_frame):
 
     def launch(self, path_to_config: str = None) -> None:
         self.load_config()
-        t = threading.Thread(target=self.webserver_run)
+        t = threading.Thread(target=self.webserver_run, daemon=True)
         t.start()
 
     def exit(self):
