@@ -1,5 +1,6 @@
 import os
 import importlib.util
+import logging
 
 from module_frame import Module_frame
 
@@ -47,14 +48,45 @@ class Loader(Module_frame):
             }
         }
 
+        self.logger = None
+
     def launch(self, path_to_config: str = None) -> None:
         """
         The function that is needed to run the initial class settings
 
         Функция, которая необходима для запуска первоначальных настроек класса
         """
+        self.logger = None
+
         self.load_config(path_to_config)
+        self.set_logger()
+
+        if self.logger:
+            self.logger.info("launch")
+
         self.create_datadirs()
+
+    def set_logger(self):
+        if self.config and self.config.get("logging", {}).get("use"):
+            if not self.config.get("logging", {}).get("file_name"):
+                file_path_name = os.path.join(self.path_to_module, self.config.get("logging", {}).get("path_dir_save", "")) + "logger" + \
+                                                                  "_" + str(len(os.listdir(os.path.join(self.path_to_module,
+                                                                                                        self.config.get("logging", {}).get("path_dir_save", "log")))) + 1) + \
+                                 "." + self.config.get("logging", {}).get("file_extension", "log")
+            else:
+                file_path_name = os.path.join(self.path_to_module, self.config.get("logging", {}).get("path_dir_save", "")) + self.config.get("logging", {}).get("file_name") + \
+                                 "." + self.config.get("logging", {}).get("file_extension", "log")
+            handlers = []
+            if self.config.get("logging", {}).get("print_to_console", 1):
+                handlers.append(logging.StreamHandler())
+            if self.config.get("logging", {}).get("print_to_file", 1):
+                handlers.append(logging.FileHandler(file_path_name))
+
+            logging.basicConfig(format=self.config["logging"]["format"],
+                                level=self.config["logging"]["level"],
+                                handlers=handlers)
+
+            self.logger = logging.getLogger(self.name.capitalize())
 
     def load_datadirs(self, settings=None):
         values = {}
@@ -65,6 +97,8 @@ class Loader(Module_frame):
         dirs = settings.get("use_dirs", [])
         for dir in dirs:
             settings_files = {}
+            if self.logger:
+                self.logger.info(f"load datadir {dir} {self.get_datadir(settings.get(dir).get('path'))}")
             values = self.update_dict(values, self.get_datadir(settings.get(dir).get("path"), settings.get(dir)))
 
         return values
@@ -94,7 +128,12 @@ class Loader(Module_frame):
             if not os.path.exists(self.config["data_dirs"][dirs]["path"]):
                 os.mkdir(self.config["data_dirs"][dirs]["path"])
 
+                if self.logger:
+                    self.logger.info(f'create data dir {self.config["data_dirs"][dirs]["path"]}')
+
     def get_datadir(self, path, settings=None):
+        if self.logger:
+            self.logger.info(f"get datadir - {path}")
         values = {}
         if settings is None:
             settings = {}
@@ -113,8 +152,7 @@ class Loader(Module_frame):
 
         return values
 
-    @staticmethod
-    def get_dirs_from_datadir(path: str = os.getcwd(), settings=None):
+    def get_dirs_from_datadir(self, path: str = os.getcwd(), settings=None):
         if settings is None:
             settings = {}
         dirs = []
@@ -128,10 +166,13 @@ class Loader(Module_frame):
             else:
                 dirs.append(path_dir)
 
+        if self.logger:
+            self.logger.debug(f"received dir from date_dir - {dirs}")
+            self.logger.info(f"received dir from date_dir - {len(dirs)}")
+
         return dirs
 
-    @staticmethod
-    def get_files_from_dir(path: str = os.getcwd(), settings=None):
+    def get_files_from_dir(self, path: str = os.getcwd(), settings=None):
         if settings is None:
             settings = {}
         values = {}
@@ -169,6 +210,9 @@ class Loader(Module_frame):
                             class_module = module.Module(path)
                             file_dict["module"] = class_module
                         except: pass
+
+                    if self.logger:
+                        self.logger.debug(f"get file {file_dict}")
 
                     values[type_file].append(file_dict)
 
