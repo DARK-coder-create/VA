@@ -45,28 +45,41 @@ class Module(Module_frame):
     def exit(self, path_to_config: str = None) -> None:
         self.save_config(path_to_config)
 
-    def main(self, values:dict={}):
+    def main(self, values=None):
+        if values is None:
+            values = {}
         try:
+            if values.get("input"):
+                values["input"].clear()
             if self.window:
-                values["input"] = []
                 if len(self.window.manager_list) > 0:
-                    values["input"] = self.window.manager_list
+                    if values.get("logger"):
+                        values.get("logger").getChild(f"{self.name}.main").info(f"get input {self.window.manager_list}")
+                    values["input"] = self.window.manager_list.copy()
+                    if values.get("input"):
+                        if values.get("logger"):
+                            logger = values.get("logger").getChild(f'{self.name}.main')
+                            logger.info(f"send input {values.get('input')}")
                     self.window.manager_list = []
 
                 if len(values.get("output", [])) > 0:
+                    if values.get("logger"):
+                        values.get("logger").getChild(f"{self.name}.main").info(
+                            f"print output {values.get('output', [])}")
                     for i in range(len(values["output"])):
-                        self.window.update_text.emit(values["output"][i])
-                    del values["output"]
+                        self.window.update_text.emit(values["output"][i], 1)
+                    values["output"] = []
 
                 if not self.window.run:
+                    if values.get("logger"):
+                        values.get("logger").getChild(f"{self.name}.main").info("exit")
                     values["exit"] = True
-            return values
         except Exception as e:
             if values.get("logger"):
                 logger = values.get("logger").getChild('input_app.main')
                 logger.exception(e)
-            return values
 
+        return values
 
     def create(self):
         app = QApplication(sys.argv)

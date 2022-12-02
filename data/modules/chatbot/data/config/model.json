@@ -1,0 +1,30 @@
+{
+  "name": "default",
+  "version": "1.0.0",
+
+  "usage": {
+    "datakeys": "data/datakeys/model.pickle",
+    "model": "data/models/model.h5"
+  },
+
+
+  "learning": {
+    "datakeys": "data/datakeys/model.pickle",
+    "database": "data/database/model.txt",
+
+    "filter": "''!\"#$%&\\'()*+,-./:;=?@[\\\\]^_`{|}~'",
+
+    "batch_size": 32,
+    "epochs": 1000,
+    "loss": "categorical_crossentropy",
+    "optimizer": "rmsprop",
+    "rmsprop_learning_rate": 0.01,
+    "metrics": ["accuracy"],
+    "save_csv_log": "data/log/default.csv",
+
+    "start_tag": "<start>",
+    "end_tag": "<end>",
+
+    "save_model": "data\\models\\model.h5"
+  }
+}

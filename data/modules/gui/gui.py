@@ -20,7 +20,7 @@ class CommaWrapableQLabel(QLabel):
 
 
 class Window(QMainWindow):
-    update_text = pyqtSignal([str], [int])
+    update_text = pyqtSignal(str, int)
 
     def __init__(self, path_to_module, settings):
         super().__init__()
@@ -66,21 +66,19 @@ class Window(QMainWindow):
         r = sr.Recognizer()
         with sr.Microphone() as source:
             r.adjust_for_ambient_noise(source, duration=0.5)
-            print(2)
             audio = r.listen(source)
 
         try:
-            print(1)
             if self.active_micro[index]:
                 task = r.recognize_google(audio, language="ru-RU").lower()
-                self.update_text.emit(task)
+                self.update_text.emit(task, 0)
                 self.active_micro = []
                 self.active_micro_bool = False
-                self.micro.setStyleSheet("background-color : rgba(0, 0, 0, 0")
+                self.micro.setStyleSheet("background-color : rgba(0, 0, 0, 0); font-size:18pt")
         except Exception as e:
             self.active_micro_bool = False
-            self.micro.setStyleSheet("background-color : rgba(0, 0, 0, 0")
-            self.update_text.emit("Ошибка записи аудио")
+            self.micro.setStyleSheet("background-color : rgba(0, 0, 0, 0); font-size:18pt")
+            self.update_text.emit("Ошибка записи аудио", 0)
 
     def clicked_micro(self):
         self.active_micro_bool = not self.active_micro_bool
@@ -89,14 +87,15 @@ class Window(QMainWindow):
 
         if self.active_micro_bool:
             self.active_micro.append(self.active_micro_bool)
-            self.micro.setStyleSheet("background-color : blue")
+            self.micro.setStyleSheet("background-color : blue; font-size:18pt")
             pf = Thread(target=self.listen_micro, args=(len(self.active_micro) - 1,), daemon=True)
             pf.start()
         else:
-            self.micro.setStyleSheet("background-color : rgba(0, 0, 0, 0")
+            self.micro.setStyleSheet("background-color : rgba(0, 0, 0, 0); font-size:18pt")
 
     def add_text_to_chat(self, text, who: bool = 0):
-        self.manager_list.append(text)
+        if not who:
+            self.manager_list.append(text)
         item = QListWidgetItem()
         # I create a custom widget*
         widget = CommaWrapableQLabel(text)
@@ -108,12 +107,12 @@ class Window(QMainWindow):
 
         if who:
             widget.setStyleSheet(
-                "background-color:rgb(119, 158, 169);;padding:10px;margin:10px;border:1px solid black; border-radius:15px; font: 10pt 'MS Shell Dlg 2';")
+                "background-color:rgb(179, 228, 239);padding:10px;margin:10px;border:1px solid black; border-radius:15px; font: 10pt 'MS Shell Dlg 2';")
 
         widget.setFixedWidth(360)
         widget.setWordWrap(True)
         widget.setScaledContents(True)
-        widget.setWordWrapAtAnychar("")
+        widget.setWordWrapAtAnychar(" ")
 
         widget.adjustSize()
         item.setSizeHint(widget.size())

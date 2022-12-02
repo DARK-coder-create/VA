@@ -58,13 +58,16 @@ class Module(Module_frame):
     def main(self, values: dict = {}):
         try:
             if values.get("input"):
+                if values.get("logger"):
+                    logger = values.get("logger").getChild(f"{self.name}.main")
+                    logger.info(f"get input {values.get('input')}")
                 output = []
                 for i in values.get("input", []):
                     tomorrow, after_tomorrow = False, False
-                    input = i.lower()
+                    inputt = i.lower()
                     class_weather = False
                     for word in self.config["presets"][self.config["use_presets"]]["keywords_input"]:
-                        if word in input:
+                        if word in inputt:
                             class_weather = True
                             break
 
@@ -84,9 +87,9 @@ class Module(Module_frame):
                             search_results = self.gismeteo.search.by_query(self.morph.parse(city)[0].normal_form)
 
                         for word in self.config["presets"][self.config["use_presets"]]["keywords_tomorrow"]:
-                            if word in input:
+                            if word in inputt:
                                 if len(word.split()) == 1:
-                                    input_split = input.split()
+                                    input_split = inputt.split()
                                     if word in input_split:
                                         tomorrow = True
                                         break
@@ -95,9 +98,9 @@ class Module(Module_frame):
                                     break
 
                         for word in self.config["presets"][self.config["use_presets"]]["keywords_after_tomorrow"]:
-                            if word in input:
+                            if word in inputt:
                                 if len(word.split()) == 1:
-                                    input_split = input.split()
+                                    input_split = inputt.split()
                                     if word in input_split:
                                         after_tomorrow = True
                                         break
@@ -129,7 +132,7 @@ class Module(Module_frame):
             return values
         except Exception as e:
             if values.get("logger"):
-                logger = values.get("logger").getChild('input_app.main')
+                logger = values.get("logger").getChild(f"{self.name}.main")
                 logger.exception(e)
 
             return values
@@ -139,5 +142,5 @@ class Module(Module_frame):
 if __name__ == '__main__':
     pf = Module(os.getcwd())
     pf.launch()
-    values = {"input": "Какая завтра погода"}
+    values = {"input": ["Какая завтра погода"]}
     print(pf.main(values))

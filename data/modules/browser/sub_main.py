@@ -46,10 +46,10 @@ class Module(Module_frame):
     def main(self, values:dict={}):
         try:
             if values.get("input"):
-                for inputе in values.get("input"):
-                    input_str = NumberExtractor().replace_groups(inputе)
+                for text in values.get("input", []):
+                    input_str = NumberExtractor().replace_groups(text)
                     new_input = []
-                    input_browser = inputе.split()
+                    input_browser = text.split()
 
                     for i in input_str.split():
                         new_input.append(self.morph.parse(i)[0].normal_form)
@@ -93,7 +93,7 @@ class Module(Module_frame):
 
                         elif switch_tab == max(open_tab, close_tab, switch_tab):
                             if_int = 0
-                            for i in self.keyword["switch_tab"]:
+                            for i in self.config.get("presets").get("ru").get("switch_tab"):
                                 try:
                                     input_browser[new_input.index(i)] = ""
                                 except Exception as e:

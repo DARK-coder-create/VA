@@ -97,7 +97,7 @@ font: 13pt &quot;MS Shell Dlg 2&quot;;</string>
       </rect>
      </property>
      <property name="styleSheet">
-      <string notr="true">font: 16pt &quot;MS Shell Dlg 2&quot;;
+      <string notr="true">font: 18pt &quot;MS Shell Dlg 2&quot;;
 background-color: rgba(0, 85, 255, 0);
 </string>
      </property>

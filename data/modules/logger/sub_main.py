@@ -2,13 +2,35 @@ import logging
 import os
 import json
 import sys
+import colorama
 
 from module_frame import Module_frame
+
+
+
+class CustomFormatter(logging.Formatter):
+    def __init__(self, formatt):
+        super().__init__()
+        self.formatt = formatt
+        self.FORMATS = {
+            logging.DEBUG: "\33[1;37m" + formatt + colorama.Fore.RESET,
+            logging.INFO: colorama.Fore.GREEN + formatt + colorama.Fore.RESET,
+            logging.WARNING: colorama.Fore.YELLOW + formatt + colorama.Fore.RESET,
+            logging.ERROR: colorama.Fore.LIGHTRED_EX + formatt + colorama.Fore.RESET,
+            logging.CRITICAL: colorama.Fore.RED + formatt + colorama.Fore.RESET,
+        }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
 
 #class <Logger>
 class Module(Module_frame):
     def __init__(self, path_to_module):
         super().__init__()
+        self.logger = None
         self.name = "logger"
         self.path_to_module = path_to_module
 
@@ -50,15 +72,22 @@ class Module(Module_frame):
             else:
                 file_path_name = os.path.join(self.path_to_module, self.config.get("logging", {}).get("path_dir_save", "log")) + self.config.get("logging", {}).get("file_name") + \
                                  "." + self.config.get("logging", {}).get("file_extension", "log")
-            handlers = []
-            if self.config.get("print_to_console", 1):
-                handlers.append(logging.StreamHandler())
-            if self.config.get("print_to_file", 1):
-                handlers.append(logging.FileHandler(file_path_name))
 
-            logging.basicConfig(format=self.config["logging"]["format"],
-                                level=self.config["logging"]["level"],
-                                handlers=handlers)
+            self.logger = logging.getLogger(self.name)
+            formatter = logging.Formatter(self.config["logging"]["format"])
+
+            if self.config.get("print_to_file", 1):
+                fileHandler = logging.FileHandler(file_path_name)
+                fileHandler.setFormatter(formatter)
+                self.logger.addHandler(fileHandler)
+
+            if self.config.get("print_to_console", 1):
+                streamHandler = logging.StreamHandler()
+                streamHandler.setFormatter(CustomFormatter(self.config["logging"]["format"]))
+                self.logger.addHandler(streamHandler)
+
+            self.logger.setLevel(self.config["logging"]["level"])
+
 
     def main(self, values=None):
         if values is None:
@@ -75,26 +104,25 @@ class Module(Module_frame):
                         self.write_log_msg(msg)
 
         except Exception as e:
-            self.write_log_msg(["Logger", logging.CRITICAL, e])
+            if self.logger:
+                self.logger.error(e)
 
-
-        values.pop("status", 0)
-        values["logger"] = logging.getLogger()
+        values["status"] = []
+        values["logger"] = self.logger
 
         return values
 
     def write_log_msg(self, msg):
-        logger = logging.getLogger(msg[0])
         if msg[1] == 10:
-            logger.debug(" - ".join(msg[2:]))
+            self.logger.debug(" - ".join(msg[2:]))
         elif msg[1] == 20:
-            logger.info(" - ".join(msg[2:]))
+            self.logger.info(" - ".join(msg[2:]))
         elif msg[1] == 30:
-            logger.warning(" - ".join(msg[2:]))
+            self.logger.warning(" - ".join(msg[2:]))
         elif msg[1] == 40:
-            logger.error(" - ".join(msg[2:]))
+            self.logger.error(" - ".join(msg[2:]))
         elif msg[1] == 50:
-            logger.critical(" - ".join(msg[2:]))
+            self.logger.critical(" - ".join(msg[2:]))
 
 
 if __name__ == '__main__':
