@@ -2,7 +2,27 @@ import os
 import importlib.util
 import logging
 
+import colorama
+
 from module_frame import Module_frame
+
+
+class CustomFormatter(logging.Formatter):
+    def __init__(self, formatt):
+        super().__init__()
+        self.formatt = formatt
+        self.FORMATS = {
+            logging.DEBUG: "\33[1;37m" + formatt + colorama.Fore.RESET,
+            logging.INFO: colorama.Fore.GREEN + formatt + colorama.Fore.RESET,
+            logging.WARNING: colorama.Fore.YELLOW + formatt + colorama.Fore.RESET,
+            logging.ERROR: colorama.Fore.LIGHTRED_EX + formatt + colorama.Fore.RESET,
+            logging.CRITICAL: colorama.Fore.RED + formatt + colorama.Fore.RESET,
+        }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
 
 
 class Loader(Module_frame):
@@ -16,6 +36,17 @@ class Loader(Module_frame):
             "version": "2.0.0",
 
             "description": "pass",
+
+            "logging": {
+                "use": True,
+                "print_to_console": 1,
+                "print_to_file": 1,
+                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                "level": 10,
+                "file_name": "loader",
+                "file_extension": "log",
+                "path_dir_save": ""
+            },
 
             "data_dirs": {
                 "use_dirs": ["main_dir"],
@@ -76,17 +107,29 @@ class Loader(Module_frame):
             else:
                 file_path_name = os.path.join(self.path_to_module, self.config.get("logging", {}).get("path_dir_save", "")) + self.config.get("logging", {}).get("file_name") + \
                                  "." + self.config.get("logging", {}).get("file_extension", "log")
-            handlers = []
-            if self.config.get("logging", {}).get("print_to_console", 1):
-                handlers.append(logging.StreamHandler())
-            if self.config.get("logging", {}).get("print_to_file", 1):
-                handlers.append(logging.FileHandler(file_path_name))
 
-            logging.basicConfig(format=self.config["logging"]["format"],
+            self.logger = logging.getLogger(self.name)
+            formatter = logging.Formatter(self.config["logging"]["format"])
+
+            if self.config.get("print_to_file", 1):
+                fileHandler = logging.FileHandler(file_path_name)
+                fileHandler.setFormatter(formatter)
+                self.logger.addHandler(fileHandler)
+
+            if self.config.get("print_to_console", 1):
+                streamHandler = logging.StreamHandler()
+                #streamHandler.setFormatter(formatter)
+                streamHandler.setFormatter(CustomFormatter(self.config["logging"]["format"]))
+                self.logger.addHandler(streamHandler)
+
+            self.logger.setLevel(self.config["logging"]["level"])
+
+
+            """logging.basicConfig(format=self.config["logging"]["format"],
                                 level=self.config["logging"]["level"],
-                                handlers=handlers)
+                                handlers=handlers)"""
 
-            self.logger = logging.getLogger(self.name.capitalize())
+            #self.logger = logging.getLogger(self.name.capitalize())
 
     def load_datadirs(self, settings=None):
         values = {}
