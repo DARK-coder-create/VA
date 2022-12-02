@@ -69,7 +69,6 @@ class VoiceAssistant(Module_frame):
             self.run = False
         if values.get("reload"):
             self.run = False
-            print(101)
             self.exit()
             self.launch()
 
@@ -80,7 +79,8 @@ class VoiceAssistant(Module_frame):
         while self.run:
             try:
                 for module in self.modules:
-                    values = module.main(values)
+                    if module.config.get("active", 0):
+                        values = module.main(values)
 
                 self.run_commands(values)
 
